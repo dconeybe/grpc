@@ -20,6 +20,7 @@
 #include <atomic>
 #include <functional>
 
+#include <grpc/support/log.h>
 #include <grpcpp/impl/codegen/call.h>
 #include <grpcpp/impl/codegen/call_op_set.h>
 #include <grpcpp/impl/codegen/callback_common.h>
@@ -197,7 +198,11 @@ class ClientBidiReactor {
   /// before this call. All streaming RPCs issued by the client MUST have
   /// StartCall invoked on them (even if they are canceled) as this call is the
   /// activation of their lifecycle.
-  void StartCall() { stream_->StartCall(); }
+  void StartCall() {
+    gpr_log(__FILE__, __LINE__, GPR_LOG_SEVERITY_INFO, "ClientBidiReactor::StartCall() start");
+    stream_->StartCall();
+    gpr_log(__FILE__, __LINE__, GPR_LOG_SEVERITY_INFO, "ClientBidiReactor::StartCall() done");
+  }
 
   /// Initiate a read operation (or post it for later initiation if StartCall
   /// has not yet been invoked).

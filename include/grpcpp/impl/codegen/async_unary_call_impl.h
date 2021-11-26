@@ -19,6 +19,7 @@
 #ifndef GRPCPP_IMPL_CODEGEN_ASYNC_UNARY_CALL_IMPL_H
 #define GRPCPP_IMPL_CODEGEN_ASYNC_UNARY_CALL_IMPL_H
 
+#include <grpc/support/log.h>
 #include <grpcpp/impl/codegen/call.h>
 #include <grpcpp/impl/codegen/channel_interface.h>
 #include <grpcpp/impl/codegen/client_context_impl.h>
@@ -107,9 +108,11 @@ class ClientAsyncResponseReader final
   static void operator delete(void*, void*) { GPR_CODEGEN_ASSERT(false); }
 
   void StartCall() override {
+    gpr_log(__FILE__, __LINE__, GPR_LOG_SEVERITY_INFO, "ClientAsyncResponseReader::StartCall() start");
     GPR_CODEGEN_ASSERT(!started_);
     started_ = true;
     StartCallInternal();
+    gpr_log(__FILE__, __LINE__, GPR_LOG_SEVERITY_INFO, "ClientAsyncResponseReader::StartCall() done");
   }
 
   /// See \a ClientAsyncResponseReaderInterface::ReadInitialMetadata for
