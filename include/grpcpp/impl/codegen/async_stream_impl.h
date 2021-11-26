@@ -531,9 +531,11 @@ class ClientAsyncReaderWriter final
   static void operator delete(void*, void*) { GPR_CODEGEN_ASSERT(false); }
 
   void StartCall(void* tag) override {
+    gpr_log(GPR_INFO, "ClientAsyncReaderWriter::StartCall() start");
     GPR_CODEGEN_ASSERT(!started_);
     started_ = true;
     StartCallInternal(tag);
+    gpr_log(GPR_INFO, "ClientAsyncReaderWriter::StartCall() done");
   }
 
   /// See the \a ClientAsyncStreamingInterface.ReadInitialMetadata method
