@@ -199,9 +199,9 @@ class ClientBidiReactor {
   /// StartCall invoked on them (even if they are canceled) as this call is the
   /// activation of their lifecycle.
   void StartCall() {
-    gpr_log(__FILE__, __LINE__, GPR_LOG_SEVERITY_INFO, "ClientBidiReactor::StartCall() start");
+    gpr_log(GPR_INFO, "ClientBidiReactor::StartCall() start");
     stream_->StartCall();
-    gpr_log(__FILE__, __LINE__, GPR_LOG_SEVERITY_INFO, "ClientBidiReactor::StartCall() done");
+    gpr_log(GPR_INFO, "ClientBidiReactor::StartCall() done");
   }
 
   /// Initiate a read operation (or post it for later initiation if StartCall

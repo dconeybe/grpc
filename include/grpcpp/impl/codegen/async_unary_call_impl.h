@@ -108,11 +108,11 @@ class ClientAsyncResponseReader final
   static void operator delete(void*, void*) { GPR_CODEGEN_ASSERT(false); }
 
   void StartCall() override {
-    gpr_log(__FILE__, __LINE__, GPR_LOG_SEVERITY_INFO, "ClientAsyncResponseReader::StartCall() start");
+    gpr_log(GPR_INFO, "ClientAsyncResponseReader::StartCall() start");
     GPR_CODEGEN_ASSERT(!started_);
     started_ = true;
     StartCallInternal();
-    gpr_log(__FILE__, __LINE__, GPR_LOG_SEVERITY_INFO, "ClientAsyncResponseReader::StartCall() done");
+    gpr_log(GPR_INFO, "ClientAsyncResponseReader::StartCall() done");
   }
 
   /// See \a ClientAsyncResponseReaderInterface::ReadInitialMetadata for

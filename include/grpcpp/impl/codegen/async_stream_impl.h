@@ -210,11 +210,11 @@ class ClientAsyncReader final : public ClientAsyncReaderInterface<R> {
   static void operator delete(void*, void*) { GPR_CODEGEN_ASSERT(false); }
 
   void StartCall(void* tag) override {
-    gpr_log(__FILE__, __LINE__, GPR_LOG_SEVERITY_INFO, "ClientAsyncReader::StartCall() start");
+    gpr_log(GPR_INFO, "ClientAsyncReader::StartCall() start");
     GPR_CODEGEN_ASSERT(!started_);
     started_ = true;
     StartCallInternal(tag);
-    gpr_log(__FILE__, __LINE__, GPR_LOG_SEVERITY_INFO, "ClientAsyncReader::StartCall() done");
+    gpr_log(GPR_INFO, "ClientAsyncReader::StartCall() done");
   }
 
   /// See the \a ClientAsyncStreamingInterface.ReadInitialMetadata
@@ -361,11 +361,11 @@ class ClientAsyncWriter final : public ClientAsyncWriterInterface<W> {
   static void operator delete(void*, void*) { GPR_CODEGEN_ASSERT(false); }
 
   void StartCall(void* tag) override {
-    gpr_log(__FILE__, __LINE__, GPR_LOG_SEVERITY_INFO, "ClientAsyncWriter::StartCall() start");
+    gpr_log(GPR_INFO, "ClientAsyncWriter::StartCall() start");
     GPR_CODEGEN_ASSERT(!started_);
     started_ = true;
     StartCallInternal(tag);
-    gpr_log(__FILE__, __LINE__, GPR_LOG_SEVERITY_INFO, "ClientAsyncWriter::StartCall() done");
+    gpr_log(GPR_INFO, "ClientAsyncWriter::StartCall() done");
   }
 
   /// See the \a ClientAsyncStreamingInterface.ReadInitialMetadata method for
