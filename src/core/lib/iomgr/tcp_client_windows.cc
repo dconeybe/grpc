@@ -78,6 +78,8 @@ static void on_alarm(void* acp, grpc_error* error) {
 }
 
 static void on_connect(void* acp, grpc_error* error) {
+  gpr_log(GPR_INFO, "tcp_client_windows.cc on_connect() start");
+
   async_connect* ac = (async_connect*)acp;
   grpc_endpoint** ep = ac->endpoint;
   GPR_ASSERT(*ep == NULL);
@@ -95,7 +97,9 @@ static void on_connect(void* acp, grpc_error* error) {
   gpr_mu_lock(&ac->mu);
 
   if (error == GRPC_ERROR_NONE) {
+    gpr_log(GPR_INFO, "tcp_client_windows.cc on_connect() error == GRPC_ERROR_NONE");
     if (socket != NULL) {
+      gpr_log(GPR_INFO, "tcp_client_windows.cc on_connect() socket != NULL");
       DWORD transfered_bytes = 0;
       DWORD flags;
       BOOL wsa_success =
@@ -110,14 +114,18 @@ static void on_connect(void* acp, grpc_error* error) {
         socket = NULL;
       }
     } else {
+      gpr_log(GPR_INFO, "tcp_client_windows.cc on_connect() socket == NULL");
       error = GRPC_ERROR_CREATE_FROM_STATIC_STRING("socket is null");
     }
+  } else {
+    gpr_log(GPR_INFO, "tcp_client_windows.cc on_connect() error != GRPC_ERROR_NONE: %d", error);
   }
 
   async_connect_unlock_and_cleanup(ac, socket);
   /* If the connection was aborted, the callback was already called when
      the deadline was met. */
   grpc_core::ExecCtx::Run(DEBUG_LOCATION, on_done, error);
+  gpr_log(GPR_INFO, "tcp_client_windows.cc on_connect() done");
 }
 
 /* Tries to issue one async connection, then schedules both an IOCP
@@ -127,6 +135,7 @@ static void tcp_connect(grpc_closure* on_done, grpc_endpoint** endpoint,
                         const grpc_channel_args* channel_args,
                         const grpc_resolved_address* addr,
                         grpc_millis deadline) {
+  gpr_log(GPR_INFO, "tcp_client_windows.cc tcp_connect() start");
   SOCKET sock = INVALID_SOCKET;
   BOOL success;
   int status;
@@ -147,15 +156,19 @@ static void tcp_connect(grpc_closure* on_done, grpc_endpoint** endpoint,
     addr = &addr6_v4mapped;
   }
 
+  gpr_log(GPR_INFO, "tcp_client_windows.cc tcp_connect() WSASocket()");
   sock = WSASocket(AF_INET6, SOCK_STREAM, IPPROTO_TCP, NULL, 0,
                    grpc_get_default_wsa_socket_flags());
   if (sock == INVALID_SOCKET) {
+    gpr_log(GPR_INFO, "tcp_client_windows.cc tcp_connect() WSASocket() FAILED");
     error = GRPC_WSA_ERROR(WSAGetLastError(), "WSASocket");
     goto failure;
   }
 
+  gpr_log(GPR_INFO, "tcp_client_windows.cc tcp_connect() grpc_tcp_prepare_socket()");
   error = grpc_tcp_prepare_socket(sock);
   if (error != GRPC_ERROR_NONE) {
+    gpr_log(GPR_INFO, "tcp_client_windows.cc tcp_connect() grpc_tcp_prepare_socket() FAILED");
     goto failure;
   }
 
@@ -173,23 +186,30 @@ static void tcp_connect(grpc_closure* on_done, grpc_endpoint** endpoint,
 
   grpc_sockaddr_make_wildcard6(0, &local_address);
 
+  gpr_log(GPR_INFO, "tcp_client_windows.cc tcp_connect() bind()");
   status =
       bind(sock, (grpc_sockaddr*)&local_address.addr, (int)local_address.len);
   if (status != 0) {
+    gpr_log(GPR_INFO, "tcp_client_windows.cc tcp_connect() bind() FAILED");
     error = GRPC_WSA_ERROR(WSAGetLastError(), "bind");
     goto failure;
   }
 
+  gpr_log(GPR_INFO, "tcp_client_windows.cc tcp_connect() grpc_winsocket_create()");
   socket = grpc_winsocket_create(sock, "client");
   info = &socket->write_info;
+  gpr_log(GPR_INFO, "tcp_client_windows.cc tcp_connect() ConnectEx()");
   success = ConnectEx(sock, (grpc_sockaddr*)&addr->addr, (int)addr->len, NULL,
                       0, NULL, &info->overlapped);
 
   /* It wouldn't be unusual to get a success immediately. But we'll still get
      an IOCP notification, so let's ignore it. */
   if (!success) {
+    gpr_log(GPR_INFO, "tcp_client_windows.cc tcp_connect() ConnectEx() returned false");
     int last_error = WSAGetLastError();
+    gpr_log(GPR_INFO, "tcp_client_windows.cc tcp_connect() ConnectEx() error: %d", last_error);
     if (last_error != ERROR_IO_PENDING) {
+      gpr_log(GPR_INFO, "tcp_client_windows.cc tcp_connect() ConnectEx() error: %d != ERROR_IO_PENDING", last_error);
       error = GRPC_WSA_ERROR(last_error, "ConnectEx");
       goto failure;
     }
@@ -208,11 +228,13 @@ static void tcp_connect(grpc_closure* on_done, grpc_endpoint** endpoint,
   GRPC_CLOSURE_INIT(&ac->on_alarm, on_alarm, ac, grpc_schedule_on_exec_ctx);
   grpc_timer_init(&ac->alarm, deadline, &ac->on_alarm);
   grpc_socket_notify_on_write(socket, &ac->on_connect);
+  gpr_log(GPR_INFO, "tcp_client_windows.cc tcp_connect() done: success!");
   return;
 
 failure:
   GPR_ASSERT(error != GRPC_ERROR_NONE);
   char* target_uri = grpc_sockaddr_to_uri(addr);
+  gpr_log(GPR_INFO, "tcp_client_windows.cc tcp_connect() done: failed! target_uri=%s", target_uri);
   grpc_error* final_error =
       grpc_error_set_str(GRPC_ERROR_CREATE_REFERENCING_FROM_STATIC_STRING(
                              "Failed to connect", &error, 1),
