@@ -135,7 +135,7 @@ static void tcp_connect(grpc_closure* on_done, grpc_endpoint** endpoint,
                         const grpc_channel_args* channel_args,
                         const grpc_resolved_address* addr,
                         grpc_millis deadline) {
-  gpr_log(GPR_INFO, "tcp_client_windows.cc tcp_connect() start");
+  gpr_log(GPR_INFO, "tcp_client_windows.cc tcp_connect() start; deadline=%d", (int)deadline);
   SOCKET sock = INVALID_SOCKET;
   BOOL success;
   int status;
