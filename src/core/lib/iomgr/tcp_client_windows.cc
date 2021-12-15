@@ -198,6 +198,22 @@ static void tcp_connect(grpc_closure* on_done, grpc_endpoint** endpoint,
   gpr_log(GPR_INFO, "tcp_client_windows.cc tcp_connect() grpc_winsocket_create()");
   socket = grpc_winsocket_create(sock, "client");
   info = &socket->write_info;
+
+  gpr_log(GPR_INFO, "tcp_client_windows.cc tcp_connect() initializing the async_connect object");
+  ac = (async_connect*)gpr_malloc(sizeof(async_connect));
+  ac->on_done = on_done;
+  ac->socket = socket;
+  gpr_mu_init(&ac->mu);
+  ac->refs = 2;
+  ac->addr_name = grpc_sockaddr_to_uri(addr);
+  ac->endpoint = endpoint;
+  ac->channel_args = grpc_channel_args_copy(channel_args);
+  GRPC_CLOSURE_INIT(&ac->on_connect, on_connect, ac, grpc_schedule_on_exec_ctx);
+
+  GRPC_CLOSURE_INIT(&ac->on_alarm, on_alarm, ac, grpc_schedule_on_exec_ctx);
+  grpc_timer_init(&ac->alarm, deadline, &ac->on_alarm);
+  grpc_socket_notify_on_write(socket, &ac->on_connect);
+
   gpr_log(GPR_INFO, "tcp_client_windows.cc tcp_connect() ConnectEx()");
   success = ConnectEx(sock, (grpc_sockaddr*)&addr->addr, (int)addr->len, NULL,
                       0, NULL, &info->overlapped);
@@ -215,19 +231,6 @@ static void tcp_connect(grpc_closure* on_done, grpc_endpoint** endpoint,
     }
   }
 
-  ac = (async_connect*)gpr_malloc(sizeof(async_connect));
-  ac->on_done = on_done;
-  ac->socket = socket;
-  gpr_mu_init(&ac->mu);
-  ac->refs = 2;
-  ac->addr_name = grpc_sockaddr_to_uri(addr);
-  ac->endpoint = endpoint;
-  ac->channel_args = grpc_channel_args_copy(channel_args);
-  GRPC_CLOSURE_INIT(&ac->on_connect, on_connect, ac, grpc_schedule_on_exec_ctx);
-
-  GRPC_CLOSURE_INIT(&ac->on_alarm, on_alarm, ac, grpc_schedule_on_exec_ctx);
-  grpc_timer_init(&ac->alarm, deadline, &ac->on_alarm);
-  grpc_socket_notify_on_write(socket, &ac->on_connect);
   gpr_log(GPR_INFO, "tcp_client_windows.cc tcp_connect() done: success!");
   return;
 
