@@ -21,6 +21,8 @@
 #include "src/core/lib/iomgr/port.h"
 
 #include <inttypes.h>
+#include <stdlib.h>
+#include <string.h>
 
 #ifdef GRPC_WINSOCK_SOCKET
 
@@ -136,6 +138,13 @@ static void tcp_connect(grpc_closure* on_done, grpc_endpoint** endpoint,
                         const grpc_resolved_address* addr,
                         grpc_millis deadline) {
   gpr_log(GPR_INFO, "tcp_client_windows.cc tcp_connect() start; deadline=%d", (int)deadline);
+
+  char* addr_null_terminated = (char*) malloc(addr->len + 1);
+  memset(addr_null_terminated, 0, addr->len + 1);
+  strncpy(addr_null_terminated, addr->addr, addr->len);
+  gpr_log(GPR_INFO, "tcp_client_windows.cc tcp_connect() addr=%s", addr_null_terminated);
+  free(addr_null_terminated);
+
   SOCKET sock = INVALID_SOCKET;
   BOOL success;
   int status;
