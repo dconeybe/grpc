@@ -195,6 +195,19 @@ static void tcp_connect(grpc_closure* on_done, grpc_endpoint** endpoint,
     goto failure;
   }
 
+  {
+    grpc_sockaddr_in* addr_as_grpc_sockaddr_in = (grpc_sockaddr_in*) &addr->addr;
+    if (addr_as_grpc_sockaddr_in->sin_family != AF_INET) {
+      gpr_log(GPR_INFO, "tcp_client_windows.cc tcp_connect() addr_as_grpc_sockaddr_in->sin_family != AF_INET: %d",
+          (int) addr_as_grpc_sockaddr_in->sin_family);
+    } else {
+      gpr_log(GPR_INFO, "tcp_client_windows.cc tcp_connect() addr_as_grpc_sockaddr_in->sin_family == AF_INET");
+      u_short port = ntohs(addr_as_grpc_sockaddr_in->sin_port);
+      char* ip_address_str = inet_ntoa(addr_as_grpc_sockaddr_in->sin_addr);
+      gpr_log(GPR_INFO, "tcp_client_windows.cc tcp_connect() addr_as_grpc_sockaddr_in specifies %s:%d", ip_address_str, (int) port);
+    }
+  }
+
   gpr_log(GPR_INFO, "tcp_client_windows.cc tcp_connect() grpc_winsocket_create()");
   socket = grpc_winsocket_create(sock, "client");
   info = &socket->write_info;
