@@ -196,15 +196,24 @@ static void tcp_connect(grpc_closure* on_done, grpc_endpoint** endpoint,
   }
 
   {
-    grpc_sockaddr_in* addr_as_grpc_sockaddr_in = (grpc_sockaddr_in*) &addr->addr;
-    if (addr_as_grpc_sockaddr_in->sin_family != AF_INET) {
-      gpr_log(GPR_INFO, "tcp_client_windows.cc tcp_connect() addr_as_grpc_sockaddr_in->sin_family != AF_INET: %d",
-          (int) addr_as_grpc_sockaddr_in->sin_family);
+    grpc_sockaddr* addr_as_grpc_sockaddr = (grpc_sockaddr*) &addr->addr;
+    if (addr_as_grpc_sockaddr->sa_family == AF_INET) {
+      gpr_log(GPR_INFO, "tcp_client_windows.cc tcp_connect() addr_as_grpc_sockaddr->sa_family == AF_INET");
+      grpc_sockaddr_in* addr_as_grpc_sockaddr_in = (grpc_sockaddr_in*) addr_as_grpc_sockaddr;
+      int port = ntohs(addr_as_grpc_sockaddr_in->sin_port);
+      char ip_address_str[1024];
+      inet_ntop(AF_INET, &addr_as_grpc_sockaddr_in->sin_addr, ip_address_str, sizeof(ip_address_str));
+      gpr_log(GPR_INFO, "tcp_client_windows.cc tcp_connect() addr_as_grpc_sockaddr_in specifies %s:%d", ip_address_str, port);
+    } else if (addr_as_grpc_sockaddr->sa_family == AF_INET6) {
+      gpr_log(GPR_INFO, "tcp_client_windows.cc tcp_connect() addr_as_grpc_sockaddr->sa_family == AF_INET6");
+      grpc_sockaddr_in6* addr_as_grpc_sockaddr_in6 = (grpc_sockaddr_in6*) addr_as_grpc_sockaddr;
+      int port = ntohs(addr_as_grpc_sockaddr_in6->sin6_port);
+      char ip_address_str[1024];
+      inet_ntop(AF_INET6, &addr_as_grpc_sockaddr_in6->sin6_addr, ip_address_str, sizeof(ip_address_str));
+      gpr_log(GPR_INFO, "tcp_client_windows.cc tcp_connect() addr_as_grpc_sockaddr_in specifies %s:%d", ip_address_str, port);
     } else {
-      gpr_log(GPR_INFO, "tcp_client_windows.cc tcp_connect() addr_as_grpc_sockaddr_in->sin_family == AF_INET");
-      u_short port = ntohs(addr_as_grpc_sockaddr_in->sin_port);
-      char* ip_address_str = inet_ntoa(addr_as_grpc_sockaddr_in->sin_addr);
-      gpr_log(GPR_INFO, "tcp_client_windows.cc tcp_connect() addr_as_grpc_sockaddr_in specifies %s:%d", ip_address_str, (int) port);
+      gpr_log(GPR_INFO, "tcp_client_windows.cc tcp_connect() addr_as_grpc_sockaddr->sa_family != AF_INET[6]: %d",
+          (int) addr_as_grpc_sockaddr->sa_family);
     }
   }
 
