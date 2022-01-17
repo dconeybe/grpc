@@ -339,18 +339,27 @@ static void tcp_connect(grpc_closure* closure, grpc_endpoint** ep,
                         const grpc_channel_args* channel_args,
                         const grpc_resolved_address* addr,
                         grpc_millis deadline) {
+  gpr_log(GPR_INFO, "tcp_client_posix.cc tcp_connect() start; addr=%s deadline=%d", grpc_sockaddr_to_uri(addr), (int)deadline);
+
   grpc_resolved_address mapped_addr;
   int fd = -1;
   grpc_error* error;
   *ep = nullptr;
+
+  gpr_log(GPR_INFO, "tcp_client_posix.cc tcp_connect() grpc_tcp_client_prepare_fd()");
   if ((error = grpc_tcp_client_prepare_fd(channel_args, addr, &mapped_addr,
                                           &fd)) != GRPC_ERROR_NONE) {
     grpc_core::ExecCtx::Run(DEBUG_LOCATION, closure, error);
+    gpr_log(GPR_INFO, "tcp_client_posix.cc tcp_connect() done with ERROR");
     return;
   }
+
+  gpr_log(GPR_INFO, "tcp_client_posix.cc tcp_connect() grpc_tcp_client_create_from_prepared_fd()");
   grpc_tcp_client_create_from_prepared_fd(interested_parties, closure, fd,
                                           channel_args, &mapped_addr, deadline,
                                           ep);
+
+  gpr_log(GPR_INFO, "tcp_client_posix.cc tcp_connect() done");
 }
 
 grpc_tcp_client_vtable grpc_posix_tcp_client_vtable = {tcp_connect};
